@@ -5,10 +5,15 @@ import pandas as pd
 from plot_func import plot_scatter_coordinates
 from settings import ACCOUNTS
 
+def format_df_date(df):
+    df.rename(columns={'Date/Time':'Date'}, inplace = True)
+    df = df.assign(Date=df.Date.dt.round('H'))
+    return df
+
 def parse_df(file_path, date_cols=['Date/Time'],headers=['Date/Time', 'Lat', 'Lon']):
     df = pd.read_csv(file_path, parse_dates=date_cols, usecols=headers)
-    df.rename(columns={'Date/Time':'Date'}, inplace = True)
     df['Demand'] = 1
+    df = format_df_date(df)
     return df
 
 def filter_df_perimeter(df, lat_lim, lon_lim):
