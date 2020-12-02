@@ -43,8 +43,7 @@ def define_quadrant(df, split, lat_lim, lon_lim):
     df.Q2.replace(0, 1, inplace=True)
     df['LonQ'] = lon_lim[0] + df.Q2 * step_lon - step_lon/2
 
-
-def define_relative_distance(df, center, radius):
+def calculate_relative_distance(df, center, radius):
     """
     Returns the real distance of all points to the center, and classifies 
     according to it the influence area group it falls in (relative distance).
