@@ -53,7 +53,19 @@ def calculate_relative_distance(df, center, radius):
     xi, yi = center
     df['Distance'] = np.sqrt((df['LatQ'] - xi)**2 + (df['LonQ'] - yi)**2)
     df['RelativeDistance'] = np.floor(df['Distance'] / radius) + 1
-    
+
+def extend_df(df, col_multiply='Gap')
+    df = pd.DataFrame(np.repeat(sdf.values,df['Gap'],axis=0), cols=sort_q.columns)
+
+def fill_date_gaps(df):
+    max_date = df.Date.max()
+    sort_df = df.sort_values('Date')
+    sort_df.reset_index(inplace=True)
+
+    sort_df['ShiftDate'] = sort_q.Date.shift(-1)
+    sort_df['ShiftDate'].fillna(max_date, inplace=True,drop=True)
+    sort_df['Gap'] = (sort_df.ShiftDate - sort_df.Date).dt.total_seconds() / 3600
+    extend_df = extend_df(sort_df,'Gap')
 
 if __name__ == '__main__':
     ## Parse data
@@ -66,25 +78,23 @@ if __name__ == '__main__':
     df = filter_df_perimeter(df, params['lat_lim'], params['lon_lim'])
     define_quadrant(df, params['split'], params['lat_lim'], params['lon_lim']) 
 
-    aggregate = {
-            'Demand' : sum, 
-            'LatQ':min, 
-            'LonQ':min, 
-            'Date':min, 
-            'Q1':min, 
-            'Q2':min
-            }
+    aggregate = {'Demand' : sum, 'LatQ':min, 'LonQ':min, 'Date':min,'Q1':min,'Q2':min}
     group_cols = [df.Date.dt.day, df.Date.dt.hour,df.LatQ, df.LonQ]
-    agg_df = df.groupby(group_cols).agg(aggregate)
+    agg_df = df.groupby(group_cols).agg(aggregate) 
     agg_df.reset_index(drop=True, inplace=True)
-    define_relative_distance(agg_df, params['center'], params['radius'])
-    
+
+    calculate_relative_distance(agg_df, params['center'], params['radius'])
     plot_scatter_coordinates(
                         agg_df,
                         'LatQ', 
                         'LonQ', 
-                        'RelativeDistance', 
+                        'RelativeDistance',
                          center=params['center'], 
                          radius=params['radius'])
+    # plot_scatter_coordinates(
+    #                     agg_df,
+    #                     'Q1', 
+    #                     'Q2', 
+    #                     'RelativeDistance') 
 
 
