@@ -20,24 +20,17 @@ def filter_df_perimeter(df, lat_lim, lon_lim):
     filter_df.reset_index(inplace=True)
     return filter_df
 
-## TODO: instead of defining quadrant by nº of splits, consider giving the distance directly (step)
-## wbhich should be much easier  ()
-def define_quadrant(df, split, lat_lim, lon_lim):
+def define_quadrant(df, step, lat_lim, lon_lim):
     """
-    Divides the map in a split by split grid. 
-    The quadrant representative coordinate will be the center of it
+    Divides the map in a grid of step x step quadrants size
+    The quadrant representative coordinate will be the center of itself
     """
-    lat_lim = (df.Lat.min(), df.Lat.max())
-    lon_lim = (df.Lon.min(), df.Lon.max())
-    step_lat = (lat_lim[1] - lat_lim[0]) / split
-    step_lon = (lon_lim[1] - lon_lim[0]) / split
-
-    df['Q1'] = np.ceil((df.Lat - lat_lim[0]) / step_lat).astype(int)
-    df['Q2'] = np.ceil((df.Lon - lon_lim[0]) / step_lon).astype(int)
-    df.Q1.replace(0, 1, inplace=True) # when equal to lower boundry, Q == 0
-    df['LatQ'] = lat_lim[0] + df.Q1 * step_lat - step_lat/2
+    df['Q1'] = np.ceil(np.abs(df.Lat - lat_lim[0]) / step).astype(int)
+    df['Q2'] = np.ceil(np.abs(df.Lon - lon_lim[0]) / step).astype(int)
+    df.Q1.replace(0, 1, inplace=True) # when coordinate equal to lower boundry, Q == 0
+    df['LatQ'] = lat_lim[0] + (df['Q1'] - 0.5) * step
     df.Q2.replace(0, 1, inplace=True)
-    df['LonQ'] = lon_lim[0] + df.Q2 * step_lon - step_lon/2
+    df['LonQ'] = lon_lim[0] + (df['Q2'] - 0.5) * step
 
 def aggregate_by_quadrant(df):
     aggregate = {'Demand' : sum, 'LatQ':min, 'LonQ':min, 'Date':min,'Q1':min,'Q2':min}
@@ -72,23 +65,24 @@ def create_date_spam_df(min_date, max_date):
     dates = [min_date + datetime.timedelta(hours=i) for i in range(int(delta_h))]
     return pd.DataFrame(dates, columns=['Date'])
 
-def create_df_skeleton(min_date, max_date, split):
+def create_df_skeleton(min_date, max_date, lat_lim, lon_lim, step):
+    lat_split = np.ceil((lat_lim[1] - lat_lim[0]) / step).astype(int) ## Needs function
+    lon_split = np.ceil((lon_lim[1] - lon_lim[0]) / step).astype(int) ## repeated in definde quadrant
     date_df = create_date_spam_df(min_date, max_date)
-    ext_1 = extend_df(date_df,group='Date',multiplier=split)
+    ext_1 = extend_df(date_df,group='Date',multiplier=lat_split)
     ext_1.rename(columns={'Cumsum':'Q1'}, inplace=True)
-    ext_2 = extend_df(ext_1, group=['Date','Q1'],multiplier=split)
+    ext_2 = extend_df(ext_1, group=['Date','Q1'],multiplier=lon_split)
     ext_2.rename(columns={'Cumsum':'Q2'}, inplace=True)
     ext_2.drop(columns='Gap', inplace=True)
-    ## TODO: we need to create a back function that given coordinate boundries, and the split
-    ## can associate the center coordinate lat and lon (inversa as define quadrant)
-    ## TODO: alternatively, we can create the skeleton coordinates giving boundry limits
+    ext_2['LatQ'] = lat_lim[0] + (ext_2['Q1'] - 0.5) * step ## Needs function
+    ext_2['LonQ'] = lon_lim[0] + (ext_2['Q2'] - 0.5) * step ## repeated in definde quadrant
     return ext_2
 
-def fill_date_gaps(df, min_date, max_date, split):
-    skeleton_df = create_df_skeleton(min_date, max_date, split)
+def fill_date_gaps(df, min_date, max_date, lat_lim, lon_lim, step):
+    skeleton_df = create_df_skeleton(min_date, max_date, lat_lim, lon_lim, step)
     merged_df = pd.merge(left = skeleton_df,
                          right = df,
-                         on = ['Date', 'Q1', 'Q2'],
+                         on = ['Date', 'Q1', 'Q2', 'LatQ', 'LonQ'],
                          how = 'left')
     merged_df.reset_index(inplace=True, drop=True)
     ## TODO: function this fillna
@@ -99,27 +93,30 @@ def fill_date_gaps(df, min_date, max_date, split):
 
     return merged_df
 
-def fill_all_quadrants(df_list, gp_keys, min_date, max_date, split):
+def fill_all_quadrants(df_list, gp_keys, min_date, max_date, lat_lim, lon_lim, step):
     """
     Given a pandas groupby object, it fullfills all the missing date/hours for each
     group and concatenates the final results
     """
-    df_to_concat = [fill_date_gaps(df, min_date, max_date, split) for df in df_list] 
+    df_to_concat = [fill_date_gaps(df, min_date, max_date, lat_lim, lon_lim, step) for df in df_list] 
     new_df = pd.concat(df_to_concat)
     new_df.reset_index(inplace=True, drop=True)
     return new_df
 
 if __name__ == '__main__':
-    ### Parse
+    ### Parameters
     client = 'uber'
     params = ACCOUNTS[client]
+    step, lat_lim, lon_lim = params['step'], params['lat_lim'], params['lon_lim']
     data_path = os.path.join(params['path'], 'raw')
+
+    ## Parse
     df = parse_df(os.path.join(data_path, os.listdir(data_path)[1]))
     min_date = df.Date.min()
     max_date = df.Date.max()
 
     ### Define scope grid
-    df = filter_df_perimeter(df, params['lat_lim'], params['lon_lim'])
-    define_quadrant(df, params['split'], params['lat_lim'], params['lon_lim']) 
+    df = filter_df_perimeter(df, lat_lim, lon_lim)
+    define_quadrant(df, step, lat_lim, lon_lim) 
     df = aggregate_by_quadrant(df)
-    complete_df = fill_date_gaps(df, min_date, max_date, params['split'])
+    complete_df = fill_date_gaps(df, min_date, max_date, lat_lim, lon_lim, step)
