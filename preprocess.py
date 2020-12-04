@@ -14,7 +14,9 @@ def filter_df_perimeter(df, lat_lim, lon_lim):
     """
     min_lat, max_lat = lat_lim
     min_lon, max_lon = lon_lim
-    filter_df = df[(df.Lat.between(min_lat,max_lat)) & (df.Lon.between(min_lon,max_lon))]
+    filter_lat =  ((df.Lat > min_lat) & (df.Lat < max_lat))
+    filter_lon =  ((df.Lon > min_lon) & (df.Lon < max_lon))
+    filter_df = df[filter_lat & filter_lon]
     filter_df.reset_index(inplace=True)
     return filter_df
 
