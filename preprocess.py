@@ -104,7 +104,7 @@ def fill_all_quadrants(df_list, gp_keys, min_date, max_date, split):
     """
     df_to_concat = [fill_date_gaps(df, min_date, max_date, split) for df in df_list] 
     new_df = pd.concat(df_to_concat)
-    new_df.reset_index(inplace=splitTrue, drop=True)
+    new_df.reset_index(inplace=True, drop=True)
     return new_df
 
 if __name__ == '__main__':
