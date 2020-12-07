@@ -8,7 +8,7 @@ from dataloader import parse_df
 
 from settings import ACCOUNTS
 
-def filter_df_perimeter(df, lat_lim, lon_lim):
+def narrow_perimeter(df, lat_lim, lon_lim):
     """
     Narrows the map scope to the study area given the boundries
     """
@@ -77,8 +77,8 @@ def create_df_skeleton(min_date, max_date, lat_lim, lon_lim, step):
     ext_2 = extend_df(ext_1, group=['Date','Q1'],multiplier=lon_split)
     ext_2.rename(columns={'Cumsum':'Q2'}, inplace=True)
     ext_2.drop(columns='Gap', inplace=True)
-    ext_2['LatQ'] = lat_lim[0] + (ext_2['Q1'] - 0.5) * step ## Needs function
-    ext_2['LonQ'] = lon_lim[0] + (ext_2['Q2'] - 0.5) * step ## repeated in definde quadrant
+    ext_2.loc[:,'LatQ'] = lat_lim[0] + (ext_2.loc[:,'Q1'] - 0.5) * step ## Needs function
+    ext_2.loc[:,'LonQ'] = lon_lim[0] + (ext_2.loc[:,'Q2'] - 0.5) * step ## repeated in definde quadrant
     return ext_2
 
 def fill_date_gaps(df, min_date, max_date, lat_lim, lon_lim, step):
