@@ -4,7 +4,7 @@ import os
 import pandas as pd
 
 from plot_func import plot_scatter_coordinates
-from dataloader import parse_df
+from dataloader import get_files_path, parse_df
 
 from settings import ACCOUNTS
 
@@ -111,15 +111,22 @@ if __name__ == '__main__':
     client = 'uber'
     params = ACCOUNTS[client]
     step, lat_lim, lon_lim = params['step'], params['lat_lim'], params['lon_lim']
-    data_path = os.path.join(params['path'], 'raw')
+    raw_data_path = os.path.join(params['path'], 'raw')
+    raw_data_files = get_files_path(raw_data_path)
 
     ## Parse
-    df = parse_df(os.path.join(data_path, os.listdir(data_path)[1]))
-    min_date = df.Date.min()
-    max_date = df.Date.max()
+    for file_name, path in raw_data_files:
+        print('-----')
+        print(f'* Cleaning {file_name}')
+        df = parse_df(os.path.join(path))
+        ## Date Limits
+        min_date = df.Date.min()
+        max_date = df.Date.max()
 
-    ### Define scope grid
-    df = filter_df_perimeter(df, lat_lim, lon_lim)
-    define_quadrant(df, step, lat_lim, lon_lim) 
-    df = aggregate_by_quadrant(df)
-    complete_df = fill_date_gaps(df, min_date, max_date, lat_lim, lon_lim, step)
+        ### Define scope grid
+        clean_df = (df.pipe(narrow_perimeter, lat_lim, lon_lim)
+                    .pipe(define_quadrant, step, lat_lim, lon_lim)
+                    .pipe(aggregate_by_quadrant)
+                    .pipe(fill_date_gaps, min_date, max_date, lat_lim, lon_lim, step)
+                    .to_csv(os.path.join(params['path'], 'clean', file_name.split('-')[-1]))
+        )
