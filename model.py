@@ -21,25 +21,4 @@ def calculate_relative_distance(df, center, radius):
 # Add calculate_weights function based on the 2 distance ones
 
 
-if __name__ == '__main__':
-    ## Parse data
-    client = 'uber'
-    params = ACCOUNTS[client]
-    data_path = os.path.join(params['path'], 'raw')
-    df = parse_df(os.path.join(data_path, os.listdir(data_path)[1]))
-
-    ### Parameters
-    df = filter_df_perimeter(df, params['lat_lim'], params['lon_lim'])
-    define_quadrant(df, params['split'], params['lat_lim'], params['lon_lim']) 
-
-    calculate_relative_distance(agg_df, params['center'], params['radius'])
-    plot_scatter_coordinates(agg_df,'LatQ', 'LonQ', 'RelativeDistance', center=params['center'],  radius=params['radius'])
-
-
-    # plot_scatter_coordinates(
-    #                     agg_df,
-    #                     'Q1', 
-    #                     'Q2', 
-    #                     'RelativeDistance') 
-
 
