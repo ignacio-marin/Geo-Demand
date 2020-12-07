@@ -18,19 +18,22 @@ def filter_df_perimeter(df, lat_lim, lon_lim):
     filter_lon =  ((df.Lon > min_lon) & (df.Lon < max_lon))
     filter_df = df[filter_lat & filter_lon]
     filter_df.reset_index(inplace=True)
+    print(f'* Perimeter narrowed: Lat ({lat_lim}), Lon ({lon_lim})')
     return filter_df
 
-def define_quadrant(df, step, lat_lim, lon_lim):
+def define_quadrant(dfm, step, lat_lim, lon_lim):
     """
     Divides the map in a grid of step x step quadrants size
     The quadrant representative coordinate will be the center of itself
     """
-    df['Q1'] = np.ceil(np.abs(df.Lat - lat_lim[0]) / step).astype(int)
-    df['Q2'] = np.ceil(np.abs(df.Lon - lon_lim[0]) / step).astype(int)
+    df = dfm.copy()
+    df.loc[:,'Q1'] = np.ceil(np.abs(df.loc[:,'Lat'] - lat_lim[0]) / step).astype(int)
+    df.loc[:,'Q2'] = np.ceil(np.abs(df.loc[:,'Lon'] - lon_lim[0]) / step).astype(int)
     df.Q1.replace(0, 1, inplace=True) # when coordinate equal to lower boundry, Q == 0
-    df['LatQ'] = lat_lim[0] + (df['Q1'] - 0.5) * step
+    df.loc[:,'LatQ'] = lat_lim[0] + (df.loc[:, 'Q1'] - 0.5) * step
     df.Q2.replace(0, 1, inplace=True)
-    df['LonQ'] = lon_lim[0] + (df['Q2'] - 0.5) * step
+    df.loc[:,'LonQ'] = lon_lim[0] + (df.loc[:, 'Q2'] - 0.5) * step
+    return df
 
 def aggregate_by_quadrant(df):
     aggregate = {'Demand' : sum, 'LatQ':min, 'LonQ':min, 'Date':min,'Q1':min,'Q2':min}
