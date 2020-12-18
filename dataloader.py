@@ -2,14 +2,35 @@ from datetime import datetime
 import os
 import pandas as pd
 
-def get_files_path(path):
-    """
-    Returns a list of tuples containing the file name and the file path
-    """
-    path_tuple_list = [(f, os.path.join(path, f)) for f in os.listdir(path) if not f.startswith('.')]
-    return path_tuple_list
+from settings import DATA_DIR
 
-def _format_date(df):
+class FileHandler:
+
+    data_path = DATA_DIR
+
+    def __init__(self, client):
+        self.client = client
+        self.client_path = self.get_client_dir()
+        self.dirs_path = self.get_dirs_paths()
+        
+    def get_client_dir(self):
+        return os.path.join(self.data_path, self.client)
+
+    def get_dirs_paths(self):
+        dirs = os.listdir(self.client_path)
+        dirs_dict = {}
+        for f in dirs:
+            if not f.startswith('.'):
+                dirs_dict[f] = os.path.join(self.client_path, f)
+
+        return dirs_dict
+
+    def get_dir_files(self, dir_name):
+        dir_path = self.dirs_path[dir_name]
+        return [(f, os.path.join(dir_path, f)) for f in os.listdir(dir_path) if not f.startswith('.')]
+
+### Uber data parser
+def _format_df_date(df):
     df = df.rename(columns={'Date/Time':'Date'})
     df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y %H:%M:%S')
     df = df.assign(Date=df.Date.dt.round('H'))
@@ -17,12 +38,11 @@ def _format_date(df):
 
 def parse_df(file_path,headers=['Date/Time', 'Lat', 'Lon']):
     then = datetime.now()
-    print('* Start parse df')
     df = pd.read_csv(file_path, usecols=headers)
-    print(f' - File read ({datetime.now() - then})')
     df['Demand'] = 1
-    print(f' - Demand = 1 added ({datetime.now() - then})')
-    df = _format_date(df)
-    print(f' - Dates reformated ({datetime.now() - then})')
-    print(f' - Data parsed: {file_path}')
+    df = _format_df_date(df)
+
     return df
+
+if __name__ == '__main__':
+    fh = FileHandler('uber')
