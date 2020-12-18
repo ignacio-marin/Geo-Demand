@@ -10,6 +10,6 @@ ACCOUNTS = {
         'lon_lim': (-74.1,-73.9),
         'step': 0.005,
         'center': (40.75, -74),
-        'radius': 0.04
+        'radius': 0.004
     },
 }
