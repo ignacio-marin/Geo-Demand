@@ -3,8 +3,8 @@ import numpy as np
 import os
 import pandas as pd
 
-from plot_func import plot_scatter_coordinates
-from dataloader import get_files_path, parse_df
+from dataloader import FileHandler
+from dataloader import parse_df
 
 from settings import ACCOUNTS
 
@@ -18,7 +18,6 @@ def narrow_perimeter(df, lat_lim, lon_lim):
     filter_lon =  ((df.Lon > min_lon) & (df.Lon < max_lon))
     filter_df = df[filter_lat & filter_lon]
     filter_df.reset_index(inplace=True)
-    print(f'* Perimeter narrowed: Lat ({lat_lim}), Lon ({lon_lim})')
     return filter_df
 
 def define_quadrant(dfm, step, lat_lim, lon_lim):
@@ -42,11 +41,6 @@ def aggregate_by_quadrant(df):
     agg_df.reset_index(drop=True, inplace=True)
     return agg_df
 
-def groupby_quadrant(df):
-    group_cols = [df.Q1, df.Q2]
-    gp = df.groupby(group_cols)
-    return gp, gp.groups.keys()
-
 def cumsum_by_group(df, group='Date',cumsum_col='Gap'):
     df['Cumsum'] = df.groupby(group)[cumsum_col].transform(pd.Series.cumsum) / df[cumsum_col]
 
@@ -68,6 +62,7 @@ def create_date_spam_df(min_date, max_date):
     dates = [min_date + datetime.timedelta(hours=i) for i in range(int(delta_h))]
     return pd.DataFrame(dates, columns=['Date'])
 
+## TODO: the performance of this function can be improved -> probably create_date_spam_df is the bottleneck
 def create_df_skeleton(min_date, max_date, lat_lim, lon_lim, step):
     lat_split = np.ceil((lat_lim[1] - lat_lim[0]) / step).astype(int) ## Needs function
     lon_split = np.ceil((lon_lim[1] - lon_lim[0]) / step).astype(int) ## repeated in definde quadrant
@@ -93,40 +88,31 @@ def fill_date_gaps(df, min_date, max_date, lat_lim, lon_lim, step):
     ## TODO: 
     merged_df['LatQ'].fillna(df.LatQ.max(), inplace=True)
     merged_df['LonQ'].fillna(df.LonQ.max(), inplace=True)
-
     return merged_df
 
-def fill_all_quadrants(df_list, gp_keys, min_date, max_date, lat_lim, lon_lim, step):
-    """
-    Given a pandas groupby object, it fullfills all the missing date/hours for each
-    group and concatenates the final results
-    """
-    df_to_concat = [fill_date_gaps(df, min_date, max_date, lat_lim, lon_lim, step) for df in df_list] 
-    new_df = pd.concat(df_to_concat)
-    new_df.reset_index(inplace=True, drop=True)
-    return new_df
+def main(file_name, path, **args):
+    print('-----')
+    print(f'* Cleaning {file_name}')
+    df = parse_df(os.path.join(path))
+    ## Date Limits
+    min_date = df.Date.min()
+    max_date = df.Date.max()
 
+    ### Define scope grid
+    (df.pipe(narrow_perimeter, lat_lim, lon_lim)
+       .pipe(define_quadrant, step, lat_lim, lon_lim)
+       .pipe(aggregate_by_quadrant)
+       .pipe(fill_date_gaps, min_date, max_date, lat_lim, lon_lim, step)
+       .to_csv(os.path.join(params['path'], 'clean', file_name.split('-')[-1]))
+    )
 if __name__ == '__main__':
-    ### Parameters
+    ## Parameters
     client = 'uber'
     params = ACCOUNTS[client]
     step, lat_lim, lon_lim = params['step'], params['lat_lim'], params['lon_lim']
-    raw_data_path = os.path.join(params['path'], 'raw')
-    raw_data_files = get_files_path(raw_data_path)
-
+    fh = FileHandler(client)
+    
     ## Parse
-    for file_name, path in raw_data_files:
-        print('-----')
-        print(f'* Cleaning {file_name}')
-        df = parse_df(os.path.join(path))
-        ## Date Limits
-        min_date = df.Date.min()
-        max_date = df.Date.max()
-
-        ### Define scope grid
-        clean_df = (df.pipe(narrow_perimeter, lat_lim, lon_lim)
-                    .pipe(define_quadrant, step, lat_lim, lon_lim)
-                    .pipe(aggregate_by_quadrant)
-                    .pipe(fill_date_gaps, min_date, max_date, lat_lim, lon_lim, step)
-                    .to_csv(os.path.join(params['path'], 'clean', file_name.split('-')[-1]))
-        )
+    ### TODO: mapstar pooll processing here
+    for file_name, path in fh.get_dir_files('raw'):
+        main(file_name, path, lat_lim= lat_lim, lon_lim=lon_lim, step=step)
