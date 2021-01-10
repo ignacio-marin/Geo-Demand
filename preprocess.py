@@ -64,20 +64,20 @@ def extend_df(df, group='Date', multiplier=50):
     cumsum_by_group(df, group, 'Gap')
     return df
 
-def create_date_spam_df(min_date, max_date):
+def create_date_span_df(min_date, max_date):
     """
-    Given 2 dates limits, the function returns as many lines as timedeltas between both values.
+    Given 2 date limits, the function returns as many lines as timedeltas between both values.
     Each line contains each date step
     """
     delta_h = int((max_date - min_date).total_seconds() / 3600)
     dates = [min_date + datetime.timedelta(hours=i) for i in range(int(delta_h))]
     return pd.DataFrame(dates, columns=['Date'])
 
-## TODO: the performance of this function can be improved -> probably create_date_spam_df is the bottleneck
+## TODO: the performance of this function can be improved -> probably create_date_span_df is the bottleneck
 def create_df_skeleton(min_date, max_date, lat_lim, lon_lim, step):
     lat_split = np.ceil((lat_lim[1] - lat_lim[0]) / step).astype(int) ## Needs function
     lon_split = np.ceil((lon_lim[1] - lon_lim[0]) / step).astype(int) ## repeated in definde quadrant
-    date_df = create_date_spam_df(min_date, max_date)
+    date_df = create_date_span_df(min_date, max_date)
     ext_1 = extend_df(date_df,group='Date',multiplier=lat_split)
     ext_1.rename(columns={'Cumsum':'Q1'}, inplace=True)
     ext_2 = extend_df(ext_1, group=['Date','Q1'],multiplier=lon_split)
