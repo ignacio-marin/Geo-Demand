@@ -29,20 +29,5 @@ class FileHandler:
         dir_path = self.dirs_path[dir_name]
         return [(f, os.path.join(dir_path, f)) for f in os.listdir(dir_path) if not f.startswith('.')]
 
-### Uber data parser
-def _format_df_date(df):
-    df = df.rename(columns={'Date/Time':'Date'})
-    df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y %H:%M:%S')
-    df = df.assign(Date=df.Date.dt.round('H'))
-    return df
-
-def parse_df(file_path,headers=['Date/Time', 'Lat', 'Lon']):
-    then = datetime.now()
-    df = pd.read_csv(file_path, usecols=headers)
-    df['Demand'] = 1
-    df = _format_df_date(df)
-
-    return df
-
 if __name__ == '__main__':
     fh = FileHandler('uber')
