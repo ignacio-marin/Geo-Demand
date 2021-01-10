@@ -104,17 +104,15 @@ def fill_date_gaps(df, min_date, max_date, lat_lim, lon_lim, step):
 def main(file_name, path, **args):
     print('-----')
     print(f'* Cleaning {file_name}')
-    df = parse_df(os.path.join(path))
-    ## Date Limits
+    df = parse_df(path)
     min_date = df.Date.min()
     max_date = df.Date.max()
 
-    ### Define scope grid
     (df.pipe(narrow_perimeter, lat_lim, lon_lim)
        .pipe(define_quadrant, step, lat_lim, lon_lim)
        .pipe(aggregate_by_quadrant)
        .pipe(fill_date_gaps, min_date, max_date, lat_lim, lon_lim, step)
-       .to_csv(os.path.join(params['path'], 'clean', file_name.split('-')[-1]))
+       .to_csv(os.path.join(params['path'], 'clean', file_name.split('-')[-1]), index=False)
     )
 if __name__ == '__main__':
     ## Parameters
