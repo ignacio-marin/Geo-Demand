@@ -4,7 +4,7 @@ import pandas as pd
 import time
 
 from dataloader import FileHandler
-from helpers import radius_list
+from helpers import fill_series_gaps, radius_list
 from settings import ACCOUNTS
 
 
@@ -115,7 +115,11 @@ class GeoModel:
         filter1 = (self.fltr_df.Date.dt.dayofweek == weekday)
         filter2 = (self.fltr_df.Date.dt.hour == hour)
         sub_df = self.fltr_df[filter1 & filter2]
-        return sub_df.groupby('Demand')['Prob'].sum()
+        return fill_series_gaps(sub_df.groupby('Demand')['Prob'].sum())
+
+    def get_all_distributions(self):
+        pass
+
 
 if __name__ == '__main__':
     fh = FileHandler('uber')
