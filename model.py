@@ -26,16 +26,24 @@ class GeoModel:
         self.radius = r
         self.r_lst = radius_list(self.radius, self.decay)
         self.alpha = alpha
-        self.fltr_df = self.__filter_df(self.df, 'LatQ', 'LonQ') 
+        self.fltr_df = self.__transform_df(self.df, 'LatQ', 'LonQ') 
+        self.get_fltr_df_attributes()
         ## Column names should be defined in the client settings (also used in preprocess)
 
-    def __filter_df(self, df, lat_col:str, lon_col:str):
+    def __transform_df(self, df, lat_col:str, lon_col:str):
         fltr_df = self.df.copy()
         latitude = fltr_df.loc[:,lat_col]
         longitude = fltr_df.loc[:,lon_col]
         fltr_df.loc[:,'Distance'] = self.euclidian_distance(self.center, latitude, longitude)
         fltr_df = fltr_df[fltr_df.Distance <= max(self.r_lst)].reset_index(drop=True)
         return fltr_df
+
+    def __get_points_probs(self):
+        time_group = [self.fltr_df.Date.dt.dayofweek, self.fltr_df.Date.dt.hour]
+        dist_group = [self.fltr_df.Date.dt.dayofweek, self.fltr_df.Date.dt.hour, self.fltr_df.Date]
+        self.fltr_df.loc[:,'TimeW'] = self.time_weights(time_group)
+        self.fltr_df.loc[:,'DistanceW'] = self.distance_weights(dist_group)
+        self.fltr_df.loc[:,'Prob'] = self.fltr_df.DistanceW * self.fltr_df.TimeW
 
 ### Distance
     @staticmethod   
@@ -103,16 +111,7 @@ class GeoModel:
         return group['RelativeDistance'].transform(self.inverse_weight, self.alpha)
 
 ### Calculate model
-    def get_points_probs(self):
-        time_group = [self.fltr_df.Date.dt.dayofweek, self.fltr_df.Date.dt.hour]
-        dist_group = [self.fltr_df.Date.dt.dayofweek, self.fltr_df.Date.dt.hour, self.fltr_df.Date]
-        self.fltr_df.loc[:,'TimeW'] = self.time_weights(time_group)
-        self.fltr_df.loc[:,'DistanceW'] = self.distance_weights(dist_group)
-        self.fltr_df.loc[:,'Prob'] = self.fltr_df.DistanceW * self.fltr_df.TimeW
-
     def get_distribution(self, weekday:int, hour:int):
-        self.get_points_probs()
-
         filter1 = (self.fltr_df.Date.dt.dayofweek == weekday)
         filter2 = (self.fltr_df.Date.dt.hour == hour)
         sub_df = self.fltr_df[filter1 & filter2]
