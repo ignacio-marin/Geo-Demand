@@ -27,7 +27,7 @@ class GeoModel:
         self.r_lst = radius_list(self.radius, self.decay)
         self.alpha = alpha
         self.fltr_df = self.__transform_df(self.df, 'LatQ', 'LonQ') 
-        self.get_fltr_df_attributes()
+        self.__get_fltr_df_attributes()
         ## Column names should be defined in the client settings (also used in preprocess)
 
     def __transform_df(self, df, lat_col:str, lon_col:str):
@@ -38,7 +38,7 @@ class GeoModel:
         fltr_df = fltr_df[fltr_df.Distance <= max(self.r_lst)].reset_index(drop=True)
         return fltr_df
 
-    def __get_points_probs(self):
+    def __get_fltr_df_attributes(self):
         time_group = [self.fltr_df.Date.dt.dayofweek, self.fltr_df.Date.dt.hour]
         dist_group = [self.fltr_df.Date.dt.dayofweek, self.fltr_df.Date.dt.hour, self.fltr_df.Date]
         self.fltr_df.loc[:,'TimeW'] = self.time_weights(time_group)
