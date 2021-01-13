@@ -10,10 +10,13 @@ from settings import ACCOUNTS
 
 ### TODO: self.filter/transformed dataframe
 
-class GeoModel:
+class Center:
 
-    def __init__(self, df:pd.DataFrame, center:tuple, r:float, r_decay:float, alpha:float):
+    def __init__(self, center:tuple, df:pd.DataFrame):
         self.center = center
+        self.scope_df = df
+        self.distributions = {}
+
         self.df = df
         self.decay = r_decay
         self.radius = r
