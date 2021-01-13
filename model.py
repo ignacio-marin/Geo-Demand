@@ -17,31 +17,32 @@ class Center:
         self.scope_df = df
         self.distributions = {}
 
+
+class GeoModel:
+
+    def __init__(self, df:pd.DataFrame, r:float, r_decay:float, alpha:float):
         self.df = df
-        self.decay = r_decay
         self.radius = r
+        self.decay = r_decay
         self.r_lst = radius_list(self.radius, self.decay)
         self.alpha = alpha
-        self.filtered_df = self.__filter_df(self.df, 'LatQ', 'LonQ') 
-        self.__get_filter_df_attributes()
 
-        self.distributions = {}
-        ## Column names should be defined in the client settings (also used in preprocess)
-
-    def __filter_df(self, df, lat_col:str, lon_col:str):
+### Define df influence area depending on center
+    def filter_df(self, center:tuple, lat_col:str, lon_col:str):
         fltr_df = self.df.copy()
         latitude = fltr_df.loc[:,lat_col]
         longitude = fltr_df.loc[:,lon_col]
-        fltr_df.loc[:,'Distance'] = self.euclidian_distance(self.center, latitude, longitude)
+        fltr_df.loc[:,'Distance'] = self.euclidian_distance(center, latitude, longitude)
         fltr_df = fltr_df[fltr_df.Distance <= max(self.r_lst)].reset_index(drop=True)
         return fltr_df
 
-    def __get_filter_df_attributes(self):
-        time_group = [self.filtered_df.Date.dt.dayofweek, self.filtered_df.Date.dt.hour]
-        dist_group = [self.filtered_df.Date.dt.dayofweek, self.filtered_df.Date.dt.hour, self.filtered_df.Date]
-        self.filtered_df.loc[:,'TimeW'] = self.time_weights(time_group)
-        self.filtered_df.loc[:,'DistanceW'] = self.distance_weights(dist_group)
-        self.filtered_df.loc[:,'Prob'] = self.filtered_df.DistanceW * self.filtered_df.TimeW
+    def get_filter_df_attributes(self, df:pd.DataFrame):
+        time_group = [df.Date.dt.dayofweek, df.Date.dt.hour]
+        dist_group = [df.Date.dt.dayofweek, df.Date.dt.hour, df.Date]
+        df.loc[:,'TimeW'] = self.time_weights(df, time_group)
+        df.loc[:,'DistanceW'] = self.distance_weights(df, dist_group)
+        df.loc[:,'Prob'] = df.DistanceW * df.TimeW
+        return df
 
 ### Distance
     @staticmethod   
@@ -59,12 +60,13 @@ class Center:
         return distance.apply(lambda x: 1 + np.searchsorted(radius_arr, x))
 
     @staticmethod
-    def time_gap(dates:pd.Series, agg='weekly'):
+    def time_gap(dates:pd.Series, uom='weekly'):
         """
-        Returns the relative time gap from the latest date. The agg arguments defines
-        the gap measure. By defaul, is per hour
+        Returns the relative time gap from the latest date. 
+        The uom (unit of mesure) arguments defines the output units, by default weeks.
+        If not specified, uom would be hourly
         """
-        uom = (3600*24*7) if agg == 'weekly' else 3600 ## can be improved
+        uom = (3600*24*7) if uom == 'weekly' else 3600 ## can be improved
         max_Date = dates.max()
         time_delta = max_Date - dates
         return 1 + np.floor(time_delta.dt.total_seconds() / uom)
@@ -91,39 +93,43 @@ class Center:
         else:
             return inv_distance / inv_distance.sum()
 
-    def time_weights(self,grouping:list):
+    def time_weights(self,df:pd.DataFrame,grouping:list):
         """
         Grouping shpuld be: ['WeekDay','Hour'] 
         """
-        self.filtered_df.loc[:,'TimeGap'] = self.time_gap(self.filtered_df.Date)
-        group = self.filtered_df.groupby(grouping)
+        df.loc[:,'TimeGap'] = self.time_gap(df.Date)
+        group = df.groupby(grouping)
         return group['TimeGap'].transform(self.inverse_weight, self.alpha, inv_split='unique')
         
-    def distance_weights(self,grouping:list):
+    def distance_weights(self,df:pd.DataFrame, grouping:list):
         """
         Grouping should be: ['Date'] (includes hour)
         Recommended alfa: 1.5-2
         """
-        self.filtered_df.loc[:,'RelativeDistance'] = self.relative_distance(self.filtered_df['Distance'], self.r_lst)
-        group = self.filtered_df.groupby(grouping)
+        df.loc[:,'RelativeDistance'] = self.relative_distance(df['Distance'], self.r_lst)
+        group = df.groupby(grouping)
         return group['RelativeDistance'].transform(self.inverse_weight, self.alpha)
 
 ### Calculate model
-    def get_distribution(self, weekday:int, hour:int):
-        filter1 = (self.filtered_df.Date.dt.dayofweek == weekday)
-        filter2 = (self.filtered_df.Date.dt.hour == hour)
-        sub_df = self.filtered_df[filter1 & filter2]
+    def get_distribution(self, df:pd.DataFrame, weekday:int, hour:int):
+        filter1 = (df.Date.dt.dayofweek == weekday)
+        filter2 = (df.Date.dt.hour == hour)
+        sub_df = df[filter1 & filter2]
         return fill_series_gaps(sub_df.groupby('Demand')['Prob'].sum())
 
-    def model(self):
-        ### good oportunity to paralelize. worht it?
-        for wkd in self.filtered_df.Date.dt.dayofweek.sort_values().unique():
-            for h in self.filtered_df.Date.dt.hour.sort_values().unique():
-                if str(wkd) in self.distributions.keys():
-                    self.distributions[str(wkd)][str(h)] = self.get_distribution(wkd, h)
+    def model(self, center:tuple):
+        scope_df = self.filter_df(center, 'LatQ', 'LonQ') 
+        scope_df = self.get_filter_df_attributes(scope_df)
+        point = Center(center, scope_df)
+        for wkd in scope_df.Date.dt.dayofweek.sort_values().unique():
+            for h in scope_df.Date.dt.hour.sort_values().unique():
+                if str(wkd) in point.distributions.keys():
+                    point.distributions[str(wkd)][str(h)] = self.get_distribution(scope_df, wkd, h)
                 else:
-                    self.distributions[str(wkd)] = {}
-                    self.distributions[str(wkd)][str(h)] = self.get_distribution(wkd, h)
+                    point.distributions[str(wkd)] = {}
+                    point.distributions[str(wkd)][str(h)] = self.get_distribution(scope_df, wkd, h)
+
+        return point
 
 if __name__ == '__main__':
     fh = FileHandler('uber')
@@ -136,6 +142,6 @@ if __name__ == '__main__':
     alpha = 1.5
     center = ACCOUNTS['uber']['center']
     print('* Data parsed')
-    gm = GeoModel(df, center,r ,r_decay, alpha)
-    gm.model()
+    gm = GeoModel(df, r ,r_decay, alpha)
+    p1 = gm.model(center)
 
