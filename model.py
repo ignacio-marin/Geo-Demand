@@ -112,9 +112,15 @@ class GeoModel:
         sub_df = self.filtered_df[filter1 & filter2]
         return fill_series_gaps(sub_df.groupby('Demand')['Prob'].sum())
 
-    def get_all_distributions(self):
-        pass
-
+    def model(self):
+        ### good oportunity to paralelize. worht it?
+        for wkd in self.filtered_df.Date.dt.dayofweek.sort_values().unique():
+            for h in self.filtered_df.Date.dt.hour.sort_values().unique():
+                if str(wkd) in self.distributions.keys():
+                    self.distributions[str(wkd)][str(h)] = self.get_distribution(wkd, h)
+                else:
+                    self.distributions[str(wkd)] = {}
+                    self.distributions[str(wkd)][str(h)] = self.get_distribution(wkd, h)
 
 if __name__ == '__main__':
     fh = FileHandler('uber')
@@ -128,4 +134,5 @@ if __name__ == '__main__':
     center = ACCOUNTS['uber']['center']
     print('* Data parsed')
     gm = GeoModel(df, center,r ,r_decay, alpha)
+    gm.model()
 
