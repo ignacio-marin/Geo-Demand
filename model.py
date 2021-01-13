@@ -10,13 +10,6 @@ from settings import ACCOUNTS
 
 ### TODO: self.filter/transformed dataframe
 
-class Point:
-    
-    def __init__(self,center):
-        self.center =  center
-        self.predictions = {}
-        
-
 class GeoModel:
 
     def __init__(self, df:pd.DataFrame, center:tuple, r:float, r_decay:float, alpha:float):
@@ -26,11 +19,13 @@ class GeoModel:
         self.radius = r
         self.r_lst = radius_list(self.radius, self.decay)
         self.alpha = alpha
-        self.fltr_df = self.__transform_df(self.df, 'LatQ', 'LonQ') 
-        self.__get_fltr_df_attributes()
+        self.filtered_df = self.__filter_df(self.df, 'LatQ', 'LonQ') 
+        self.__get_filter_df_attributes()
+
+        self.distributions = {}
         ## Column names should be defined in the client settings (also used in preprocess)
 
-    def __transform_df(self, df, lat_col:str, lon_col:str):
+    def __filter_df(self, df, lat_col:str, lon_col:str):
         fltr_df = self.df.copy()
         latitude = fltr_df.loc[:,lat_col]
         longitude = fltr_df.loc[:,lon_col]
@@ -38,12 +33,12 @@ class GeoModel:
         fltr_df = fltr_df[fltr_df.Distance <= max(self.r_lst)].reset_index(drop=True)
         return fltr_df
 
-    def __get_fltr_df_attributes(self):
-        time_group = [self.fltr_df.Date.dt.dayofweek, self.fltr_df.Date.dt.hour]
-        dist_group = [self.fltr_df.Date.dt.dayofweek, self.fltr_df.Date.dt.hour, self.fltr_df.Date]
-        self.fltr_df.loc[:,'TimeW'] = self.time_weights(time_group)
-        self.fltr_df.loc[:,'DistanceW'] = self.distance_weights(dist_group)
-        self.fltr_df.loc[:,'Prob'] = self.fltr_df.DistanceW * self.fltr_df.TimeW
+    def __get_filter_df_attributes(self):
+        time_group = [self.filtered_df.Date.dt.dayofweek, self.filtered_df.Date.dt.hour]
+        dist_group = [self.filtered_df.Date.dt.dayofweek, self.filtered_df.Date.dt.hour, self.filtered_df.Date]
+        self.filtered_df.loc[:,'TimeW'] = self.time_weights(time_group)
+        self.filtered_df.loc[:,'DistanceW'] = self.distance_weights(dist_group)
+        self.filtered_df.loc[:,'Prob'] = self.filtered_df.DistanceW * self.filtered_df.TimeW
 
 ### Distance
     @staticmethod   
@@ -97,8 +92,8 @@ class GeoModel:
         """
         Grouping shpuld be: ['WeekDay','Hour'] 
         """
-        self.fltr_df.loc[:,'TimeGap'] = self.time_gap(self.fltr_df.Date)
-        group = self.fltr_df.groupby(grouping)
+        self.filtered_df.loc[:,'TimeGap'] = self.time_gap(self.filtered_df.Date)
+        group = self.filtered_df.groupby(grouping)
         return group['TimeGap'].transform(self.inverse_weight, self.alpha, inv_split='unique')
         
     def distance_weights(self,grouping:list):
@@ -106,15 +101,15 @@ class GeoModel:
         Grouping should be: ['Date'] (includes hour)
         Recommended alfa: 1.5-2
         """
-        self.fltr_df.loc[:,'RelativeDistance'] = self.relative_distance(self.fltr_df['Distance'], self.r_lst)
-        group = self.fltr_df.groupby(grouping)
+        self.filtered_df.loc[:,'RelativeDistance'] = self.relative_distance(self.filtered_df['Distance'], self.r_lst)
+        group = self.filtered_df.groupby(grouping)
         return group['RelativeDistance'].transform(self.inverse_weight, self.alpha)
 
 ### Calculate model
     def get_distribution(self, weekday:int, hour:int):
-        filter1 = (self.fltr_df.Date.dt.dayofweek == weekday)
-        filter2 = (self.fltr_df.Date.dt.hour == hour)
-        sub_df = self.fltr_df[filter1 & filter2]
+        filter1 = (self.filtered_df.Date.dt.dayofweek == weekday)
+        filter2 = (self.filtered_df.Date.dt.hour == hour)
+        sub_df = self.filtered_df[filter1 & filter2]
         return fill_series_gaps(sub_df.groupby('Demand')['Prob'].sum())
 
     def get_all_distributions(self):
