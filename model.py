@@ -15,7 +15,21 @@ class Center:
     def __init__(self, center:tuple, df:pd.DataFrame, dict_dist:dict):
         self.center = center
         self.scope_df = df
+        self.distributions = dict_dist
+        self.day_of_week_distributions = {
+            k: self.convolve_distributions(self.distributions[k]) for k in self.distributions.keys()
+        }
+        self.week_distribution = {
+            'Week' : self.convolve_distributions(self.day_of_week_distributions)
+        }
 
+    def convolve_distributions(self, dist_dict:dict):
+        for k,d in enumerate(dist_dict.values()):
+            if k == 0:
+                dist = d
+            else:
+                dist = np.convolve(dist, d)
+        return dist
 
 class GeoModel:
 
