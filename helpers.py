@@ -65,9 +65,27 @@ def fill_series_gaps(x:pd.Series):
     fill = x.combine(y, min).interpolate()
     return fill / fill.sum()
 
-def regroup_distribution_buckets(x:pd.Series, n):
-    z = pd.Series(index=pd.RangeIndex(0,np.floor(len(x)/n)),dtype=np.float64)
+def regroup_dist_buckets(x:pd.Series, n):
+    """
+    n: bucket size
+    """
+    m = np.floor(len(x)/n)
+    index = pd.interval_range(start=0, periods=m+1, freq=n, closed='left')
+    z = pd.Series(index=pd.RangeIndex(0,m * n, n),dtype=np.float64)
+
     for k,i in enumerate(z.index):
         z[i] = x[k*n:k*n+n].sum()
+    return z
+
+def regroup_dist_interval_buckets(x:pd.Series, n):
+    """
+    n: bucket size
+    """
+    m = np.floor(len(x)/n)
+    index = pd.interval_range(start=0, periods=m+1, freq=n, closed='left')
+    z = pd.Series(index=index,dtype=np.float64)
+    for k, idx_tup in enumerate(z.index.to_tuples()):
+        low, high = idx_tup
+        z.loc[low] = x[low:high].sum()
     return z
 
