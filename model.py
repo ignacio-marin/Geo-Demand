@@ -8,14 +8,13 @@ from helpers import fill_series_gaps, radius_list
 from settings import ACCOUNTS
 
 
-### TODO: self.filter/transformed dataframe
+### TODO: add lat-lim boundries to geo demand and assert if center is out of bounds
 
 class Center:
 
-    def __init__(self, center:tuple, df:pd.DataFrame):
+    def __init__(self, center:tuple, df:pd.DataFrame, dict_dist:dict):
         self.center = center
         self.scope_df = df
-        self.distributions = {}
 
 
 class GeoModel:
@@ -120,16 +119,16 @@ class GeoModel:
     def model(self, center:tuple):
         scope_df = self.filter_df(center, 'LatQ', 'LonQ') 
         scope_df = self.get_filter_df_attributes(scope_df)
-        point = Center(center, scope_df)
+        distributions = {}
         for wkd in scope_df.Date.dt.dayofweek.sort_values().unique():
             for h in scope_df.Date.dt.hour.sort_values().unique():
-                if str(wkd) in point.distributions.keys():
-                    point.distributions[str(wkd)][str(h)] = self.get_distribution(scope_df, wkd, h)
+                if str(wkd) in distributions.keys():
+                    distributions[str(wkd)][str(h)] = self.get_distribution(scope_df, wkd, h)
                 else:
-                    point.distributions[str(wkd)] = {}
-                    point.distributions[str(wkd)][str(h)] = self.get_distribution(scope_df, wkd, h)
-
-        return point
+                    distributions[str(wkd)] = {}
+                    distributions[str(wkd)][str(h)] = self.get_distribution(scope_df, wkd, h)
+                    
+        return Center(center, scope_df, distributions)
 
 if __name__ == '__main__':
     fh = FileHandler('uber')
@@ -140,8 +139,10 @@ if __name__ == '__main__':
     r = 0.004
     r_decay = 0.1
     alpha = 1.5
-    center = ACCOUNTS['uber']['center']
+    c1 = ACCOUNTS['uber']['center']
     print('* Data parsed')
     gm = GeoModel(df, r ,r_decay, alpha)
-    p1 = gm.model(center)
+    p1 = gm.model(c1)
+    c2 = (40.7, -74.0)
+    p2 = gm.model(c2)
 
