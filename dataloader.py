@@ -11,7 +11,7 @@ class FileHandler:
     def __init__(self, client):
         self.client = client
         self.client_path = self.get_client_dir()
-        self.dirs_path = self.get_dirs_paths()
+        self.directories = self.get_dirs_paths()
         
     def get_client_dir(self):
         return os.path.join(self.data_path, self.client)
@@ -26,8 +26,24 @@ class FileHandler:
         return dirs_dict
 
     def get_dir_files(self, dir_name):
-        dir_path = self.dirs_path[dir_name]
+        dir_path = self.directories[dir_name]
         return [(f, os.path.join(dir_path, f)) for f in os.listdir(dir_path) if not f.startswith('.')]
+
+class DataLoader:
+
+    def __init__(self, client):
+        self.client = client
+        self.file_handler = FileHandler(self.client)
+
+    def read_all(self,folder_name, date_format='', date_col='Date'):
+        df_list = [pd.read_csv(path) for _, path in self.file_handler.get_dir_files(folder_name)]
+        df = pd.concat(df_list).reset_index(drop=True)
+        if date_format:
+            df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %H:%M:%S')
+            return df
+        else:
+            return df
+
 
 if __name__ == '__main__':
     fh = FileHandler('uber')
