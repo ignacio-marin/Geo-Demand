@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import time
 
-from dataloader import FileHandler
+from dataloader import DataLoader
 from helpers import fill_series_gaps, radius_list
 from settings import ACCOUNTS
 
@@ -145,14 +145,12 @@ class GeoModel:
         return Center(center, scope_df, distributions)
 
 if __name__ == '__main__':
-    fh = FileHandler('uber')
-    df_lst = [pd.read_csv(path[1]) for path in fh.get_dir_files('clean')]
-    df = pd.concat(df_lst).reset_index(drop=True)
+    dl = DataLoader('uber')
+    df = dl.read_all('clean',date_format='%Y-%m-%d %H:%M:%S')
     ### Date format should be hanldled in the DataLoader class TODO
-    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %H:%M:%S')
-    r = 0.004
-    r_decay = 0.1
-    alpha = 1.5
+    r = ACCOUNTS['uber']['radius']
+    r_decay = ACCOUNTS['uber']['r_decay']
+    alpha = ACCOUNTS['uber']['alpha']
     c1 = ACCOUNTS['uber']['center']
     print('* Data parsed')
     gm = GeoModel(df, r ,r_decay, alpha)
