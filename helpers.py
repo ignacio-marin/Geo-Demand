@@ -70,7 +70,6 @@ def regroup_dist_buckets(x:pd.Series, n):
     n: bucket size
     """
     m = np.floor(len(x)/n)
-    index = pd.interval_range(start=0, periods=m+1, freq=n, closed='left')
     z = pd.Series(index=pd.RangeIndex(0,m * n, n),dtype=np.float64)
 
     for k,i in enumerate(z.index):
@@ -84,7 +83,7 @@ def regroup_dist_interval_buckets(x:pd.Series, n):
     m = np.floor(len(x)/n)
     index = pd.interval_range(start=0, periods=m+1, freq=n, closed='left')
     z = pd.Series(index=index,dtype=np.float64)
-    for k, idx_tup in enumerate(z.index.to_tuples()):
+    for idx_tup in z.index.to_tuples():
         low, high = idx_tup
         z.loc[low] = x[low:high].sum()
     return z
