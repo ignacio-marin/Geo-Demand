@@ -1,10 +1,11 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import time
 
 from dataloader import DataLoader
-from helpers import fill_series_gaps, radius_list
+from helpers import fill_series_gaps, radius_list, regroup_dist_interval_buckets
 from settings import ACCOUNTS
 
 
@@ -31,6 +32,21 @@ class Center:
                 dist = np.convolve(dist, d)
         return dist
 
+    def plot_dist(self, weekday='',hour='', bins=20):
+        if weekday and hour:
+            D = self.distributions[weekday][hour]
+        elif weekday:
+            D = self.day_of_week_distributions[weekday]
+        else:
+            D = self.week_distribution['Week']
+        
+        n_bins = int(np.floor(len(D)/bins))
+        resize_dist = regroup_dist_interval_buckets(D,n_bins)
+        resize_dist.plot(kind='bar', alpha=0.4)
+        resize_dist.plot(linestyle='--',color='r', alpha=0.5)
+        plt.xticks(rotation=45)
+        plt.show()
+ 
 class GeoModel:
 
     def __init__(self, df:pd.DataFrame, r:float, r_decay:float, alpha:float):
@@ -147,7 +163,6 @@ class GeoModel:
 if __name__ == '__main__':
     dl = DataLoader('uber')
     df = dl.read_all('clean',date_format='%Y-%m-%d %H:%M:%S')
-    ### Date format should be hanldled in the DataLoader class TODO
     r = ACCOUNTS['uber']['radius']
     r_decay = ACCOUNTS['uber']['r_decay']
     alpha = ACCOUNTS['uber']['alpha']
