@@ -5,7 +5,8 @@ import pandas as pd
 import time
 
 from dataloader import DataLoader
-from helpers import fill_series_gaps, radius_list, regroup_dist_interval_buckets
+from helpers import fill_series_gaps, radius_list
+from helpers import regroup_dist_interval_buckets, get_quantile_dict
 from settings import ACCOUNTS
 
 
@@ -32,6 +33,12 @@ class Center:
                 dist = np.convolve(dist, d)
         return dist
 
+    def plot_linechart(self,weekday=''):
+        quant_dict = get_quantile_dict(self.distributions[weekday])
+        for v in quant_dict.values():
+            plt.plot(v)
+        plt.show()
+
     def plot_dist(self, weekday='',hour='', bins=20):
         if weekday and hour:
             D = self.distributions[weekday][hour]
@@ -47,6 +54,8 @@ class Center:
         plt.xticks(rotation=45)
         plt.show()
  
+        
+
 class GeoModel:
 
     def __init__(self, df:pd.DataFrame, r:float, r_decay:float, alpha:float):
