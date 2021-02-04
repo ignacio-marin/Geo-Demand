@@ -9,7 +9,7 @@ def ring_equal_area_radius(r, area):
 def equal_area_rings_radius(r, n_rings):
     rr = [r]
     area = np.pi*r**2
-    for i in range(n_rings-1):
+    for _ in range(n_rings-1):
         r = ring_equal_area_radius(r, area)
         rr.append(r)
     return np.array(rr)
@@ -56,11 +56,10 @@ def fill_series_gaps(x:pd.Series):
     +++++++++++++++++++++
     | Index |    Value  |    fill+interpolation: 
     +++++++++++++++++++++               [0.4, 0.4, 0.3, 0.2]
-    +   0   |     0.4   |    final:
-    +   1   |     0.4   |             [0.307, 0.307, 0.23, 0.153]
-    +   4   |     0.2   |
+    |   0   |     0.4   |    final:
+    |   1   |     0.4   |             [0.307, 0.307, 0.23, 0.153]
+    |   3   |     0.2   |
     """
-    n = x.index.max()
     y = pd.Series(index=np.arange(x.index.max()+1),dtype=np.float64)
     fill = x.combine(y, min).interpolate()
     return fill / fill.sum()
@@ -88,3 +87,16 @@ def regroup_dist_interval_buckets(x:pd.Series, n):
         z.loc[low] = x[low:high].sum()
     return z
 
+def get_quantile_index(x:pd.Series, p:float):
+    return abs(p - np.cumsum(x)).argmin()
+
+def get_quantile_dict(dist_dict, quantiles=[0.05,0.25,0.5,0.75,0.95]):
+    q_dict = {}
+    for q in quantiles:
+        for k in dist_dict.keys():
+            if str(q) in q_dict.keys():
+                q_dict[str(q)].append(get_quantile_index(dist_dict[k], q))
+            else:
+                q_dict[str(q)] = [get_quantile_index(dist_dict[k], q)]
+
+    return q_dict
