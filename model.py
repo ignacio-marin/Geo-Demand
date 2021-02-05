@@ -38,7 +38,7 @@ class Center:
     def plot_weekday(self,weekday:int):
         quant_dict = get_quantile_dict(self.distributions[str(weekday)])
         quant_keys = list(quant_dict)
-        # TODO: functio that automatically provides a list of color paterns according to the lenght of the quant dict
+        # TODO: function that automatically provides a list of color paterns according to the lenght of the quant dict
         cycol = cycle(['lightcoral','gold','turquoise','lightgreen','lightgreen','turquoise','gold','lightcoral'])
         for n,k in enumerate(quant_keys):
             x = [i for i in range(len(quant_dict[k]))]
@@ -54,7 +54,10 @@ class Center:
                 plt.scatter(x,quant_dict[k], color=c, s=10, label=k)
 
         plt.legend(title='Quantiles', loc='best')
-        plt.title(f'{list(calendar.day_name)[weekday]} demand. {self.center}')
+        plt.title(f'{list(calendar.day_name)[weekday]} Demand. {self.center}')
+        plt.xlabel('Hour')
+        plt.ylabel('Demand')
+        plt.grid(axis='both',linestyle='-', linewidth=1, alpha=0.2)
         plt.show()
 
     def plot_distribution(self, weekday:int,hour:int, bins=20):
@@ -76,8 +79,7 @@ class Center:
         plt.title(f'{title} Distribution. {self.center}')
         plt.xlabel('Demand')
         plt.ylabel('Prob')
-        plt.show()
- 
+        plt.show() 
         
 
 class GeoModel:
@@ -203,6 +205,6 @@ if __name__ == '__main__':
     print('* Data parsed')
     gm = GeoModel(df, r ,r_decay, alpha)
     p1 = gm.model(c1)
-    c2 = (40.7, -74.0)
+    c2 = (40.75, -73.99)
     p2 = gm.model(c2)
 
