@@ -90,7 +90,7 @@ def regroup_dist_interval_buckets(x:pd.Series, n):
 def get_quantile_index(x:pd.Series, p:float):
     return abs(p - np.cumsum(x)).argmin()
 
-def get_quantile_dict(dist_dict, quantiles=[0.05,0.25,0.5,0.75,0.95]):
+def get_quantile_dict(dist_dict, quantiles=[0.1,0.15,0.25,0.45,0.55,0.75,0.85,0.9]):
     q_dict = {}
     for q in quantiles:
         for k in dist_dict.keys():
