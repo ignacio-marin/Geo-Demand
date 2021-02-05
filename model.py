@@ -57,19 +57,25 @@ class Center:
         plt.title(f'{list(calendar.day_name)[weekday]} demand. {self.center}')
         plt.show()
 
-    def plot_dist(self, weekday='',hour='', bins=20):
+    def plot_distribution(self, weekday:int,hour:int, bins=20):
         if weekday and hour:
-            D = self.distributions[weekday][hour]
+            D = self.distributions[str(weekday)][str(hour)]
+            title = list(calendar.day_name)[weekday] + ' ' + str(hour) + 'h'
         elif weekday:
-            D = self.day_of_week_distributions[weekday]
+            D = self.day_of_week_distributions[str(weekday)]
+            title = list(calendar.day_name)[weekday] 
         else:
             D = self.week_distribution['Week']
+            title = 'Weekly'
         
         n_bins = int(np.floor(len(D)/bins))
         resize_dist = regroup_dist_interval_buckets(D,n_bins)
         resize_dist.plot(kind='bar', alpha=0.4)
         resize_dist.plot(linestyle='--',color='r', alpha=0.5)
         plt.xticks(rotation=45)
+        plt.title(f'{title} Distribution. {self.center}')
+        plt.xlabel('Demand')
+        plt.ylabel('Prob')
         plt.show()
  
         
