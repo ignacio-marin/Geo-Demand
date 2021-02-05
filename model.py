@@ -1,3 +1,5 @@
+import calendar
+from itertools import cycle
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -33,10 +35,26 @@ class Center:
                 dist = np.convolve(dist, d)
         return dist
 
-    def plot_linechart(self,weekday=''):
-        quant_dict = get_quantile_dict(self.distributions[weekday])
-        for v in quant_dict.values():
-            plt.plot(v)
+    def plot_weekday(self,weekday:int):
+        quant_dict = get_quantile_dict(self.distributions[str(weekday)])
+        quant_keys = list(quant_dict)
+        # TODO: functio that automatically provides a list of color paterns according to the lenght of the quant dict
+        cycol = cycle(['lightcoral','gold','turquoise','lightgreen','lightgreen','turquoise','gold','lightcoral'])
+        for n,k in enumerate(quant_keys):
+            x = [i for i in range(len(quant_dict[k]))]
+            if n == 0:
+                c = next(cycol)
+                plt.scatter(x,quant_dict[k], color=c, s=10, label=k)
+            else:
+                c = next(cycol)
+                x = [i for i in range(len(quant_dict[k]))]
+                plt.fill_between(x, quant_dict[quant_keys[n-1]], 
+                                    quant_dict[quant_keys[n]], 
+                                    color=c, alpha=0.1)
+                plt.scatter(x,quant_dict[k], color=c, s=10, label=k)
+
+        plt.legend(title='Quantiles', loc='best')
+        plt.title(f'{list(calendar.day_name)[weekday]} demand. {self.center}')
         plt.show()
 
     def plot_dist(self, weekday='',hour='', bins=20):
