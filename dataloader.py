@@ -35,15 +35,11 @@ class DataLoader:
         self.client = client
         self.file_handler = FileHandler(self.client)
 
-    def read_all(self,folder_name, date_format='', date_col='Date'):
+    def read_all(self,folder_name, date_format='%Y-%m-%d %H:%M:%S', date_col='Date'):
         df_list = [pd.read_csv(path) for _, path in self.file_handler.get_dir_files(folder_name)]
         df = pd.concat(df_list).reset_index(drop=True)
         if date_format:
-            df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %H:%M:%S')
+            df['Date'] = pd.to_datetime(df[date_col], format=date_format)
             return df
         else:
             return df
-
-
-if __name__ == '__main__':
-    fh = FileHandler('uber')
