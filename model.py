@@ -39,19 +39,21 @@ class Center:
         quant_dict = get_quantile_dict(self.distributions[str(weekday)])
         quant_keys = list(quant_dict)
         # TODO: function that automatically provides a list of color paterns according to the lenght of the quant dict
-        cycol = cycle(['lightcoral','gold','turquoise','lightgreen','lightgreen','turquoise','gold','lightcoral'])
+        cycol1 = cycle(['lightcoral','gold','turquoise','lightgreen','lightgreen','turquoise','gold','lightcoral'])
+        cycol2 = cycle(['lightcoral','gold','turquoise','lightgreen','turquoise','gold','lightcoral'])
         for n,k in enumerate(quant_keys):
             x = [i for i in range(len(quant_dict[k]))]
             if n == 0:
-                c = next(cycol)
-                plt.scatter(x,quant_dict[k], color=c, s=10, label=k)
+                c1 = next(cycol1)
+                plt.scatter(x,quant_dict[k], color=c1, s=10, label=k)
             else:
-                c = next(cycol)
+                c1 = next(cycol1)
+                c2 = next(cycol2)
                 x = [i for i in range(len(quant_dict[k]))]
+                plt.scatter(x,quant_dict[k], color=c1, s=10, label=k)
                 plt.fill_between(x, quant_dict[quant_keys[n-1]], 
                                     quant_dict[quant_keys[n]], 
-                                    color=c, alpha=0.1)
-                plt.scatter(x,quant_dict[k], color=c, s=10, label=k)
+                                    color=c2, alpha=0.1)
 
         plt.legend(title='Quantiles', loc='best')
         plt.title(f'{list(calendar.day_name)[weekday]} Demand. {self.center}')
