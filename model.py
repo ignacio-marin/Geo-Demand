@@ -92,7 +92,7 @@ class GeoModel:
         self.alpha = alpha
 
 ### Define df influence area depending on center
-    def filter_df(self, center:tuple, lat_col:str, lon_col:str):
+    def filter_df(self, center:tuple, lon_col:str, lat_col:str,):
         fltr_df = self.df.copy()
         latitude = fltr_df.loc[:,lat_col]
         longitude = fltr_df.loc[:,lon_col]
@@ -112,7 +112,7 @@ class GeoModel:
     @staticmethod   
     def euclidian_distance(center:tuple, latitude:pd.Series, longitude:pd.Series):
         xi, yi = center
-        return np.sqrt((latitude - xi)**2 + (longitude - yi)**2)
+        return np.sqrt((longitude - xi)**2 + (latitude - yi)**2)
 
     @staticmethod
     def relative_distance(distance:pd.Series, radius_arr:list):
@@ -182,7 +182,7 @@ class GeoModel:
         return fill_series_gaps(sub_df.groupby('Demand')['Prob'].sum())
 
     def model(self, center:tuple):
-        scope_df = self.filter_df(center, 'LatQ', 'LonQ') 
+        scope_df = self.filter_df(center, lat_col='LatQ', lon_col='LonQ') 
         scope_df = self.get_filter_df_attributes(scope_df)
         distributions = {}
         for wkd in scope_df.Date.dt.dayofweek.sort_values().unique():
@@ -205,6 +205,3 @@ if __name__ == '__main__':
     print('* Data parsed')
     gm = GeoModel(df, r ,r_decay, alpha)
     p1 = gm.model(c1)
-    c2 = (40.75, -73.99)
-    p2 = gm.model(c2)
-
