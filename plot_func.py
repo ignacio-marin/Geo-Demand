@@ -11,7 +11,7 @@ def plot_circles(ax, center, radius_lst):
                             linestyle='--')
         ax.add_artist(circle)
 
-def plot_scatter_coordinates(df, x, y, z, center='', radius=[]):
+def plot_scatter_coordinates(df, x, y, z, center=None, radius=[]):
     """
     Plots a 2D scatter 
     """
