@@ -104,7 +104,7 @@ class GeoModel:
 
     def get_filter_df_attributes(self, df:pd.DataFrame):
         time_group = [df.Date.dt.dayofweek, df.Date.dt.hour]
-        dist_group = [df.Date.dt.dayofweek, df.Date.dt.hour, df.Date]
+        dist_group = [df.Date] ##[df.Date.dt.dayofweek, df.Date.dt.hour, df.Date]
         df.loc[:,'TimeW'] = self.time_weights(df, time_group)
         df.loc[:,'DistanceW'] = self.distance_weights(df, dist_group)
         df.loc[:,'Prob'] = df.DistanceW * df.TimeW
@@ -206,4 +206,4 @@ if __name__ == '__main__':
     c1 = ACCOUNTS['uber']['center']
     print('* Data parsed')
     gm = GeoModel(df, r ,r_decay, alpha)
-    p1 = gm.model(c1)
+    p1 = gm.model((-73.99, 40.75))
