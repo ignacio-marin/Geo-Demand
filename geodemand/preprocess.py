@@ -3,9 +3,9 @@ import numpy as np
 import os
 import pandas as pd
 
-from dataloader import FileHandler
+from geodemand.dataloader import FileHandler
 
-from settings import ACCOUNTS
+from geodemand.settings import ACCOUNTS
 
 def _format_df_date(df):
     df = df.rename(columns={'Date/Time':'Date'})
