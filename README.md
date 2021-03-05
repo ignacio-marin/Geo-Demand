@@ -17,13 +17,6 @@ The complete project explanation below focuses on just one data set (Uber pickup
 
 <!-- GETTING STARTED -->
 ## Getting Started
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-* pip
-  ```sh
-  pip install -r requirements.txt
-  ```
 
 ### Installation
 
