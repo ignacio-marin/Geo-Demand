@@ -197,13 +197,3 @@ class GeoModel:
                     
         return Center(center, scope_df, distributions)
 
-if __name__ == '__main__':
-    dl = DataLoader('uber')
-    df = dl.read_all('clean',date_format='%Y-%m-%d %H:%M:%S')
-    r = ACCOUNTS['uber']['radius']
-    r_decay = ACCOUNTS['uber']['r_decay']
-    alpha = ACCOUNTS['uber']['alpha']
-    c1 = ACCOUNTS['uber']['center']
-    print('* Data parsed')
-    gm = GeoModel(df, r ,r_decay, alpha)
-    p1 = gm.model((-73.99, 40.75))
