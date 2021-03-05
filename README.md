@@ -1,6 +1,3 @@
-[![LinkedIn][linkedin-shield]][www.linkedin.com/in/ignacio-marin-eiroa]
-
-
 # Project purpose
 
 Every single day, millions of people transit the main cities of the world, in a restless dynamic flow that makes these capitals alive, giving them their identity and soul. Since the raise of big data at scale, billions of those movements have been registered in many different ways and forms, providing a unique opportunity to exploit them to better understand how those movements work.
