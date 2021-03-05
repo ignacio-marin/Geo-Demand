@@ -1,5 +1,7 @@
 data/*
 .vscode/
+.env
 __pycache__/*
+geodemand/__pycache__*
 notebooks/*
 unused.py
