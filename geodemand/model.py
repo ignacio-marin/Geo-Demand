@@ -6,10 +6,10 @@ import os
 import pandas as pd
 import time
 
-from dataloader import DataLoader
-from helpers import fill_series_gaps, radius_list
-from helpers import regroup_dist_interval_buckets, get_quantile_dict
-from settings import ACCOUNTS
+from geodemand.dataloader import DataLoader
+from geodemand.helpers import fill_series_gaps, radius_list
+from geodemand.helpers import regroup_dist_interval_buckets, get_quantile_dict
+from geodemand.settings import ACCOUNTS
 
 
 ### TODO: add lat-lim boundries to geo demand and assert if center is out of bounds

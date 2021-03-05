@@ -2,7 +2,7 @@ from datetime import datetime
 import os
 import pandas as pd
 
-from settings import DATA_DIR
+from geodemand.settings import DATA_DIR
 
 class FileHandler:
 
