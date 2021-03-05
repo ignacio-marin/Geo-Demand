@@ -7,11 +7,6 @@ This project aims to create a scalable probabilistic model for geographical dema
 - On-demand pick up services, such as Uber, Cabify, etc...
 - Pedestrian-traffic intensity tracking
 
-The complete project explanation below focuses on just one data set (Uber pickups) to illustrate the overall approach, but could be applied to many other use cases. In summary, this document will cover the following aspects:
-
-- Data analysis and preprocess: all the transformations applied prior to modelling
-- Modelling: step-by-step assumptions and approach considered
-- Results: overview of the model output and further improvement actions
 <!-- ABOUT THE PROJECT -->
 
 
