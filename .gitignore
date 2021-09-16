@@ -5,3 +5,4 @@ __pycache__/*
 geodemand/__pycache__*
 notebooks/*
 unused.py
+env
