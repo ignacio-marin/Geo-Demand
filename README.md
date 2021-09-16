@@ -23,3 +23,4 @@ This project aims to create a scalable probabilistic model for geographical dema
    ```sh
    pip install -r requirements.txt
    ```
+Test
