@@ -120,7 +120,8 @@ if __name__ == '__main__':
     params = ACCOUNTS[client]
     step, lat_lim, lon_lim = params['step'], params['lat_lim'], params['lon_lim']
     fh = FileHandler(client)
-    
+    print('Data path: {}'.format(fh.data_path))
+    ## change
     ## Parse
     ### TODO: mapstar pooll processing here
     for file_name, path in fh.get_dir_files('raw'):
