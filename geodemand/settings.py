@@ -1,7 +1,12 @@
 import os
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(ROOT_DIR,'data')
+
+if os.name == 'posix':
+    ROOT_DIR = DATA_DIR = '/mnt'
+else:
+
+    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DATA_DIR = os.path.join(ROOT_DIR,'data')
 
 ACCOUNTS = {
     'uber': {
